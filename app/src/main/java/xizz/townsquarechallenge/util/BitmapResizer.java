@@ -1,8 +1,8 @@
-package xizz.townsquarechallenge;
+package xizz.townsquarechallenge.util;
 
 import android.graphics.BitmapFactory;
 
-public class Utils {
+public class BitmapResizer {
 	public static int calculateInSampleSize(BitmapFactory.Options options,
 	                                        int reqWidth, int reqHeight) {
 		// Raw height and width of image

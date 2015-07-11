@@ -8,7 +8,7 @@ import android.os.Bundle;
 
 import xizz.townsquarechallenge.object.Article;
 
-public class ArticleListActivity extends SingleFragmentActivity
+public class ArticleListActivity extends FragmentActivity
 		implements ArticleListFragment.Callbacks {
 
 	@Override

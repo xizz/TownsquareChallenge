@@ -5,7 +5,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
 
-public abstract class SingleFragmentActivity extends Activity {
+public abstract class FragmentActivity extends Activity {
 	protected abstract Fragment createFragment();
 
 	protected int getLayoutResId() {

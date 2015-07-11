@@ -1,4 +1,4 @@
-package xizz.townsquarechallenge;
+package xizz.townsquarechallenge.util;
 
 import android.util.Log;
 
@@ -16,10 +16,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import xizz.townsquarechallenge.Application;
 import xizz.townsquarechallenge.object.Article;
 import xizz.townsquarechallenge.object.ArticleContent;
 import xizz.townsquarechallenge.object.ContentImage;
 import xizz.townsquarechallenge.object.ContentText;
+import xizz.townsquarechallenge.object.ContentVideo;
 
 public class ScreenCrushFetcher {
 	private static final String TAG = ScreenCrushFetcher.class.getSimpleName();
@@ -30,6 +32,8 @@ public class ScreenCrushFetcher {
 	public static List<Article> getArticleList() {
 		JSONArray jsonArray = getArticlesJSONArray();
 		List<Article> articles = new ArrayList<>();
+		if (jsonArray == null)
+			return articles;
 		try {
 			for (int i = 0; i < jsonArray.length(); ++i) {
 				Article article = new Article();
@@ -52,10 +56,11 @@ public class ScreenCrushFetcher {
 	}
 
 	public static byte[] getUrlBytes(String urlSpec) throws IOException {
-		URL url = new URL(urlSpec);
-		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
+		HttpURLConnection connection = null;
 		try {
+			URL url = new URL(urlSpec);
+			connection = (HttpURLConnection) url.openConnection();
+
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			InputStream in = connection.getInputStream();
 
@@ -69,7 +74,8 @@ public class ScreenCrushFetcher {
 			out.close();
 			return out.toByteArray();
 		} finally {
-			connection.disconnect();
+			if (connection != null)
+				connection.disconnect();
 		}
 	}
 
@@ -105,19 +111,19 @@ public class ScreenCrushFetcher {
 	private static ArticleContent[] getArticleContents(JSONArray podContent) throws JSONException {
 		ArrayList<ArticleContent> contents = new ArrayList<>();
 		for (int i = 0; i < podContent.length(); ++i) {
-			JSONObject jsonObject = podContent.getJSONObject(i);
-			if (ArticleContent.TEXT.equals(jsonObject.getString("type"))) {
-				ContentText content =
-						new ContentText(jsonObject.getJSONObject("data").getString("text"));
-				Log.d(TAG, content.text);
-				contents.add(content);
-			} else if (ArticleContent.IMAGE.equals(jsonObject.getString("type"))) {
-				ContentImage content =
-						new ContentImage(jsonObject.getJSONObject("data").getString("thumbnail"));
-				Log.d(TAG, content.url);
-				contents.add(content);
+			JSONObject contentJson = podContent.getJSONObject(i);
+			JSONObject data = contentJson.getJSONObject("data");
+			ArticleContent content = null;
+			if (ArticleContent.TEXT.equals(contentJson.getString("type"))) {
+				content = new ContentText(data.getString("text"));
+			} else if (ArticleContent.IMAGE.equals(contentJson.getString("type"))) {
+				content = new ContentImage(data.getString("thumbnail"));
+			} else if (ArticleContent.VIDEO.equals(contentJson.getString("type"))
+					&& "video".equals(data.getString("type"))) {
+				content = new ContentVideo(data.getString("thumbnail_url"), data.getString("url"));
 			}
-
+			if (content != null)
+				contents.add(content);
 		}
 		return contents.toArray(new ArticleContent[contents.size()]);
 	}

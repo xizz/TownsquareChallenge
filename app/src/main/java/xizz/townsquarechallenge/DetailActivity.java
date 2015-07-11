@@ -3,7 +3,7 @@ package xizz.townsquarechallenge;
 import android.app.Fragment;
 import android.os.Bundle;
 
-public class DetailActivity extends SingleFragmentActivity {
+public class DetailActivity extends FragmentActivity {
 	public static final String EXTRA_ARTICLE = "article";
 	private static final String TAG = DetailActivity.class.getSimpleName();
 

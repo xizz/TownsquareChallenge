@@ -1,11 +1,11 @@
 package xizz.townsquarechallenge;
 
 import android.app.Activity;
-import android.app.ListFragment;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
@@ -18,8 +18,10 @@ import android.widget.TextView;
 import java.util.List;
 
 import xizz.townsquarechallenge.object.Article;
+import xizz.townsquarechallenge.util.ScreenCrushFetcher;
+import xizz.townsquarechallenge.util.ThumbnailDownloader;
 
-public class ArticleListFragment extends ListFragment {
+public class ArticleListFragment extends SwipeRefreshListFragment {
 
 	private static final String TAG = ArticleListFragment.class.getSimpleName();
 
@@ -54,14 +56,13 @@ public class ArticleListFragment extends ListFragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-//		getListView().setPadding(HORIZONTAL_MARGIN, 0,
-//				HORIZONTAL_MARGIN, VERTICAL_MARGIN);
-	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
 		new FetchArticlesTask().execute();
+		setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				new FetchArticlesTask().execute();
+			}
+		});
 	}
 
 	@Override
@@ -90,6 +91,7 @@ public class ArticleListFragment extends ListFragment {
 	private void refreshList(List<Article> articles) {
 		ArticleAdapter adapter = new ArticleAdapter(articles);
 		setListAdapter(adapter);
+		setRefreshing(false);
 	}
 
 	public interface Callbacks {

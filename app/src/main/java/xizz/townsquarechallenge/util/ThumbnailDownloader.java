@@ -1,4 +1,4 @@
-package xizz.townsquarechallenge;
+package xizz.townsquarechallenge.util;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -69,7 +69,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 			BitmapFactory.Options options = new BitmapFactory.Options();
 			options.inJustDecodeBounds = true;
 			BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length, options);
-			options.inSampleSize = Utils.calculateInSampleSize(options, size, size);
+			options.inSampleSize = BitmapResizer.calculateInSampleSize(options, size, size);
 			options.inJustDecodeBounds = false;
 			final Bitmap bitmap =
 					BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length, options);
@@ -85,7 +85,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 				}
 			});
 		} catch (IOException e) {
-			Log.e(TAG, "Error downloading image", e);
+			Log.w(TAG, "Downloading image failed: ", e);
 		}
 	}
 

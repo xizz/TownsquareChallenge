@@ -4,7 +4,7 @@ public class ContentText extends ArticleContent {
 	public String text;
 
 	public ContentText() {
-		text = "";
+		this("");
 	}
 
 	public ContentText(String t) {

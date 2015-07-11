@@ -10,7 +10,7 @@ import java.util.HashMap;
 public class Application extends android.app.Application {
 	public static String sArticlesJsonString;
 	public static HashMap<Integer, String> sArticles = new HashMap<>();
-	public static int ICON_SIZE, HORIZONTAL_MARGIN, VERTICAL_MARGIN;
+	public static int ICON_SIZE;
 
 	@Override
 	public void onCreate() {
@@ -19,14 +19,7 @@ public class Application extends android.app.Application {
 		ICON_SIZE = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
 				96, getResources().getDisplayMetrics());
 
-		HORIZONTAL_MARGIN = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-				getResources().getDimension(R.dimen.activity_horizontal_margin), getResources()
-						.getDisplayMetrics());
-
-		VERTICAL_MARGIN = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-				getResources().getDimension(R.dimen.activity_vertical_margin), getResources()
-						.getDisplayMetrics());
-
+		// Code below exist for providing demo json result when http request fails.
 		BufferedReader reader;
 
 		try {

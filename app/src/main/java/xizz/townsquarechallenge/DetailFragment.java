@@ -1,10 +1,11 @@
 package xizz.townsquarechallenge;
 
 import android.app.Fragment;
-import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,16 +14,24 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ShareActionProvider;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import xizz.townsquarechallenge.object.Article;
 import xizz.townsquarechallenge.object.ArticleContent;
 import xizz.townsquarechallenge.object.ContentImage;
 import xizz.townsquarechallenge.object.ContentText;
+import xizz.townsquarechallenge.object.ContentVideo;
+import xizz.townsquarechallenge.util.ScreenCrushFetcher;
+import xizz.townsquarechallenge.util.ThumbnailDownloader;
 
 public class DetailFragment extends Fragment {
 	private static final String TAG = DetailFragment.class.getSimpleName();
@@ -31,11 +40,14 @@ public class DetailFragment extends Fragment {
 
 	private LinearLayout layout;
 	private ThumbnailDownloader<ImageView> thumbnailThread;
+	private Article article;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Log.d(TAG, "onCreate()");
+
+		setHasOptionsMenu(true);
 
 		Display display = getActivity().getWindowManager().getDefaultDisplay();
 		Point size = new Point();
@@ -62,7 +74,7 @@ public class DetailFragment extends Fragment {
 		View v = inflater.inflate(R.layout.fragment_detail, container, false);
 		layout = (LinearLayout) v.findViewById(R.id.article_detail);
 
-		Article article = (Article) getArguments().getSerializable(DetailActivity.EXTRA_ARTICLE);
+		article = (Article) getArguments().getSerializable(DetailActivity.EXTRA_ARTICLE);
 		Log.d(TAG, "article from argument: " + article);
 		new FetchArticleTask().execute(article);
 		return v;
@@ -81,7 +93,35 @@ public class DetailFragment extends Fragment {
 		Log.d(TAG, "Background thread destroyed");
 	}
 
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+		inflater.inflate(R.menu.menu_detail, menu);
+
+		MenuItem menuItem = menu.findItem(R.id.action_share);
+
+		ShareActionProvider shareActionProvider =
+				(ShareActionProvider) menuItem.getActionProvider();
+		if (shareActionProvider != null)
+			shareActionProvider.setShareIntent(createShareForecastIntent());
+		else
+			Toast.makeText(getActivity(), "Share Action Provider is null",
+					Toast.LENGTH_SHORT).show();
+	}
+
+
+	private Intent createShareForecastIntent() {
+		Intent shareIntent = new Intent(Intent.ACTION_SEND);
+		shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		shareIntent.setType("text/plain");
+		shareIntent.putExtra(Intent.EXTRA_TEXT, article.url);
+
+		return shareIntent;
+	}
+
 	private void reloadDisplay(Article article) {
+		if (getActivity() == null)
+			return;
+
 		layout.removeAllViews();
 
 		TextView titleView = new TextView(getActivity());
@@ -106,39 +146,33 @@ public class DetailFragment extends Fragment {
 		authorDateView.setText(authorDateStr);
 		layout.addView(authorDateView);
 
-		addContentViews(getActivity(), layout, article.contents);
+		addContentViews(article.contents);
 	}
 
-	private void addContentViews(
-			Context context, LinearLayout layout, ArticleContent[] contents) {
+	private void addContentViews(ArticleContent[] contents) {
 		for (ArticleContent content : contents) {
 			if (content instanceof ContentText) {
 				ContentText contentText = (ContentText) content;
-				TextView textView = new TextView(context);
+				TextView textView = new TextView(getActivity());
 				textView.setText(Html.fromHtml(contentText.text));
 				layout.addView(textView);
 			} else if (content instanceof ContentImage) {
 				final ContentImage contentImage = (ContentImage) content;
-				final ImageView imageView = new ImageView(context);
-//				new AsyncTask<Void, Void, Bitmap>() {
-//					@Override
-//					protected Bitmap doInBackground(Void... params) {
-//						try {
-//							byte[] bitmapBytes = ScreenCrushFetcher.getUrlBytes(contentImage.url);
-//							return BitmapFactory
-//									.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
-//						} catch (IOException e) {
-//							Log.e(TAG, "Error: " + e.getMessage());
-//						}
-//						return null;
-//					}
-//
-//					@Override
-//					protected void onPostExecute(Bitmap bitmap) {
-//						imageView.setImageBitmap(bitmap);
-//					}
-//				}.execute();
+				final ImageView imageView = new ImageView(getActivity());
+
 				thumbnailThread.queueThumbnail(imageView, contentImage.url);
+				layout.addView(imageView);
+			} else if (content instanceof ContentVideo) {
+				final ContentVideo contentVideo = (ContentVideo) content;
+				final ImageView imageView = new ImageView(getActivity());
+				imageView.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						startActivity(new Intent(Intent.ACTION_VIEW,
+								Uri.parse(contentVideo.videoUrl)));
+					}
+				});
+				thumbnailThread.queueThumbnail(imageView, contentVideo.thumbnailUrl);
 				layout.addView(imageView);
 			}
 		}

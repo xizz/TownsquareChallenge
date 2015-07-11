@@ -4,7 +4,7 @@ public class ContentImage extends ArticleContent {
 	public String url;
 
 	public ContentImage() {
-		url = "";
+		this("");
 	}
 
 	public ContentImage(String u) {
