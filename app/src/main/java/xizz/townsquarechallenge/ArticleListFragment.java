@@ -1,10 +1,8 @@
 package xizz.townsquarechallenge;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
 import android.util.Log;
@@ -15,19 +13,18 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.util.List;
 
 import xizz.townsquarechallenge.object.Article;
 import xizz.townsquarechallenge.util.ScreenCrushFetcher;
-import xizz.townsquarechallenge.util.ThumbnailDownloader;
 
 public class ArticleListFragment extends SwipeRefreshListFragment {
 
 	private static final String TAG = ArticleListFragment.class.getSimpleName();
 
 	private Callbacks callbacks;
-
-	private ThumbnailDownloader<ImageView> thumbnailThread;
 
 	@Override
 	public void onAttach(Activity activity) {
@@ -39,18 +36,6 @@ public class ArticleListFragment extends SwipeRefreshListFragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true);
-
-		thumbnailThread = new ThumbnailDownloader<>(new Handler(), Application.ICON_SIZE);
-		thumbnailThread.setListener(new ThumbnailDownloader.Listener<ImageView>() {
-			@Override
-			public void onThumbnailDownloaded(ImageView imageView, Bitmap thumbnail) {
-				if (isVisible())
-					imageView.setImageBitmap(thumbnail);
-			}
-		});
-		thumbnailThread.start();
-		thumbnailThread.getLooper();
-		Log.d(TAG, "Background thread started");
 	}
 
 	@Override
@@ -63,19 +48,6 @@ public class ArticleListFragment extends SwipeRefreshListFragment {
 				new FetchArticlesTask().execute();
 			}
 		});
-	}
-
-	@Override
-	public void onDestroyView() {
-		super.onDestroyView();
-		thumbnailThread.clearQueue();
-	}
-
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		thumbnailThread.quit();
-		Log.d(TAG, "Background thread destroyed");
 	}
 
 	@Override
@@ -114,8 +86,13 @@ public class ArticleListFragment extends SwipeRefreshListFragment {
 			final ImageView iconView =
 					(ImageView) convertView.findViewById(R.id.article_list_item_icon);
 			iconView.setImageResource(R.drawable.blank);
+			Picasso.with(getActivity().getApplicationContext())
+					.load(article.imageUrl)
+					.resize(Application.ICON_SIZE, Application.ICON_SIZE)
+					.centerCrop()
+					.into(iconView);
+
 			Log.d(TAG, "Getting thumbnail: " + article.imageUrl);
-			thumbnailThread.queueThumbnail(iconView, article.imageUrl);
 
 			final TextView titleView =
 					(TextView) convertView.findViewById(R.id.article_list_item_title);

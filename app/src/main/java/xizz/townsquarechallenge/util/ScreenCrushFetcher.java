@@ -7,7 +7,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -53,33 +52,6 @@ public class ScreenCrushFetcher {
 
 		Log.d(TAG, articles.size() + " received");
 		return articles;
-	}
-
-	public static byte[] getUrlBytes(String urlSpec) throws IOException {
-		HttpURLConnection connection = null;
-		try {
-			URL url = new URL(urlSpec);
-			connection = (HttpURLConnection) url.openConnection();
-
-			if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-				Log.w(TAG, "Getting image failed for: " + urlSpec);
-				Log.w(TAG, "Error code: " + connection.getResponseCode());
-				return new byte[0];
-			}
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			InputStream in = connection.getInputStream();
-
-			int bytesRead;
-			byte[] buffer = new byte[1024];
-			while ((bytesRead = in.read(buffer)) > 0)
-				out.write(buffer, 0, bytesRead);
-			in.close();
-			out.close();
-			return out.toByteArray();
-		} finally {
-			if (connection != null)
-				connection.disconnect();
-		}
 	}
 
 	public static Article getArticleDetail(Article article) {

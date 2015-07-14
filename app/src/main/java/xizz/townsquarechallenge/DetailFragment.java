@@ -2,13 +2,11 @@ package xizz.townsquarechallenge;
 
 import android.app.Fragment;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
@@ -25,13 +23,14 @@ import android.widget.ShareActionProvider;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.squareup.picasso.Picasso;
+
 import xizz.townsquarechallenge.object.Article;
 import xizz.townsquarechallenge.object.ArticleContent;
 import xizz.townsquarechallenge.object.ContentImage;
 import xizz.townsquarechallenge.object.ContentText;
 import xizz.townsquarechallenge.object.ContentVideo;
 import xizz.townsquarechallenge.util.ScreenCrushFetcher;
-import xizz.townsquarechallenge.util.ThumbnailDownloader;
 
 public class DetailFragment extends Fragment {
 	private static final String TAG = DetailFragment.class.getSimpleName();
@@ -39,7 +38,6 @@ public class DetailFragment extends Fragment {
 			ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
 	private LinearLayout layout;
-	private ThumbnailDownloader<ImageView> thumbnailThread;
 	private Article article;
 
 	@Override
@@ -53,16 +51,6 @@ public class DetailFragment extends Fragment {
 		Point size = new Point();
 		display.getSize(size);
 
-		thumbnailThread = new ThumbnailDownloader<>(new Handler(), size.x);
-		thumbnailThread.setListener(new ThumbnailDownloader.Listener<ImageView>() {
-			@Override
-			public void onThumbnailDownloaded(ImageView imageView, Bitmap thumbnail) {
-				if (isVisible())
-					imageView.setImageBitmap(thumbnail);
-			}
-		});
-		thumbnailThread.start();
-		thumbnailThread.getLooper();
 		Log.d(TAG, "Background thread started");
 	}
 
@@ -78,19 +66,6 @@ public class DetailFragment extends Fragment {
 		Log.d(TAG, "article from argument: " + article);
 		new FetchArticleTask().execute(article);
 		return v;
-	}
-
-	@Override
-	public void onDestroyView() {
-		super.onDestroyView();
-		thumbnailThread.clearQueue();
-	}
-
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		thumbnailThread.quit();
-		Log.d(TAG, "Background thread destroyed");
 	}
 
 	@Override
@@ -159,8 +134,9 @@ public class DetailFragment extends Fragment {
 			} else if (content instanceof ContentImage) {
 				final ContentImage contentImage = (ContentImage) content;
 				final ImageView imageView = new ImageView(getActivity());
-
-				thumbnailThread.queueThumbnail(imageView, contentImage.url);
+				Picasso.with(getActivity().getApplicationContext())
+						.load(contentImage.url)
+						.into(imageView);
 				layout.addView(imageView);
 			} else if (content instanceof ContentVideo) {
 				final ContentVideo contentVideo = (ContentVideo) content;
@@ -172,7 +148,9 @@ public class DetailFragment extends Fragment {
 								Uri.parse(contentVideo.videoUrl)));
 					}
 				});
-				thumbnailThread.queueThumbnail(imageView, contentVideo.thumbnailUrl);
+				Picasso.with(getActivity().getApplicationContext())
+						.load(contentVideo.thumbnailUrl)
+						.into(imageView);
 				layout.addView(imageView);
 			}
 		}
