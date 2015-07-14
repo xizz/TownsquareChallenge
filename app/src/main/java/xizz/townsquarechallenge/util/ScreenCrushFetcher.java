@@ -41,7 +41,7 @@ public class ScreenCrushFetcher {
 				article.title = jsonArray.getJSONObject(i).getString("title");
 				article.date = jsonArray.getJSONObject(i).getString("date");
 				article.url = jsonArray.getJSONObject(i).getString("url");
-				article.imageUrl = jsonArray.getJSONObject(i).getString("thumbnail");
+				article.imageUrl = jsonArray.getJSONObject(i).getString("thumbnail_guid");
 				article.jsonUrl = article.url.replace("http://screencrush.com/",
 						"http://screencrush.com/restapp/site/screencrush.com/uri/");
 				articles.add(article);
@@ -61,16 +61,19 @@ public class ScreenCrushFetcher {
 			URL url = new URL(urlSpec);
 			connection = (HttpURLConnection) url.openConnection();
 
+			if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+				Log.w(TAG, "Getting image failed for: " + urlSpec);
+				Log.w(TAG, "Error code: " + connection.getResponseCode());
+				return new byte[0];
+			}
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			InputStream in = connection.getInputStream();
-
-			if (connection.getResponseCode() != HttpURLConnection.HTTP_OK)
-				return new byte[0];
 
 			int bytesRead;
 			byte[] buffer = new byte[1024];
 			while ((bytesRead = in.read(buffer)) > 0)
 				out.write(buffer, 0, bytesRead);
+			in.close();
 			out.close();
 			return out.toByteArray();
 		} finally {
@@ -117,7 +120,7 @@ public class ScreenCrushFetcher {
 			if (ArticleContent.TEXT.equals(contentJson.getString("type"))) {
 				content = new ContentText(data.getString("text"));
 			} else if (ArticleContent.IMAGE.equals(contentJson.getString("type"))) {
-				content = new ContentImage(data.getString("thumbnail"));
+				content = new ContentImage(data.getString("thumbnail_guid"));
 			} else if (ArticleContent.VIDEO.equals(contentJson.getString("type"))
 					&& "video".equals(data.getString("type"))) {
 				content = new ContentVideo(data.getString("thumbnail_url"), data.getString("url"));
@@ -182,6 +185,7 @@ public class ScreenCrushFetcher {
 				jsonResult.append(line);
 				jsonResult.append("\n");
 			}
+			inputStream.close();
 			reader.close();
 		} catch (IOException e) {
 			Log.e(TAG, e.getMessage(), e);

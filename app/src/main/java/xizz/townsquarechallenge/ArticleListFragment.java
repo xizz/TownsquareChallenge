@@ -114,6 +114,7 @@ public class ArticleListFragment extends SwipeRefreshListFragment {
 			final ImageView iconView =
 					(ImageView) convertView.findViewById(R.id.article_list_item_icon);
 			iconView.setImageResource(R.drawable.blank);
+			Log.d(TAG, "Getting thumbnail: " + article.imageUrl);
 			thumbnailThread.queueThumbnail(iconView, article.imageUrl);
 
 			final TextView titleView =
